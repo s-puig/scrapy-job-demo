@@ -1,8 +1,10 @@
+import datetime
 from typing import AsyncGenerator, Any
 
 import scrapy
 
-from job_harvesting.items import JobHarvestingItem
+from job_harvesting.items.tecnoempleo_scraping_item import TecnoempleoScrapingItem, TecnoempleoExperienceLevel, \
+    TecnoempleoContractType, TecnoempleoRemoteStatus
 
 
 class TecnoempleoSpider(scrapy.Spider):
@@ -20,17 +22,17 @@ class TecnoempleoSpider(scrapy.Spider):
         if next_page_link is not None:
             yield response.follow(next_page_link, callback=self.parse)
 
-    def parse_offer(self, response: scrapy.http.Response) -> AsyncGenerator[JobHarvestingItem, None]:
+    def parse_offer(self, response: scrapy.http.Response) -> AsyncGenerator[TecnoempleoScrapingItem, None]:
         container = response.xpath('//div[@class="container"]')
         header = container.xpath('//div[@class="row"]')
+        id = container.xpath('.//input[@name="refer"]/@value').get()
         title = header.xpath('normalize-space(//h1[@itemprop="title"])').get()
         company = header.xpath('normalize-space(//div/a/span[@itemprop="name"])').get()
         date_posted = header.xpath('normalize-space(//i[contains(@class, "fi-calendar")]/parent::span)').get()
-        experience_level = header.xpath('normalize-space(//i[contains(@class, "fi-shield-ok")]/ancestor::li[1]/span)').get()
-        contract_type = header.xpath('normalize-space(//i[contains(@class, "fi-task-list")]/ancestor::li[1]/span)').get()
-        employment_type = header.xpath('normalize-space(//i[contains(@class, "fi-calendar")]/ancestor::li[1]/span)').get()
+        experience_level = TecnoempleoExperienceLevel.from_str(header.xpath('normalize-space(//i[contains(@class, "fi-shield-ok")]/ancestor::li[1]/span)').get())
+        contract_type = TecnoempleoContractType.from_str(header.xpath('normalize-space(//i[contains(@class, "fi-task-list")]/ancestor::li[1]/span)').get())
         description = container.xpath('normalize-space(//div[@itemprop="description"]/p)').get()
-        yield JobHarvestingItem(title=title, company=company, date_posted=date_posted, experience_level=experience_level,contract_type=contract_type, employment_type=employment_type, description=description)
+        yield TecnoempleoScrapingItem(id=id, title=title, company=company, date_posted=date_posted, experience_level=experience_level,contract_type=contract_type, description=description, location=None, province=None, remote_status=TecnoempleoRemoteStatus.UNDEFINED)
 
     async def start(self) -> AsyncGenerator[scrapy.http.Request, None]:
         tags = getattr(self, "tags", None)

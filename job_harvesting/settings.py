@@ -58,9 +58,9 @@ DOWNLOAD_DELAY = 1
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "job_harvesting.pipelines.JobHarvestingPipeline": 300,
-#}
+ITEM_PIPELINES = {
+    "job_harvesting.pipelines.job_harvesting_dispatcher_pipeline.JobHarvestingDispatcherPipeline": 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
